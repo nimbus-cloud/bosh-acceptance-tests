@@ -90,3 +90,15 @@ properties:
     <% if properties.batlight.drain_type %>
     drain_type: <%= properties.batlight.drain_type %>
     <% end %>
+  <% if properties.potato %>
+  dns:
+    dnsservers:
+    - 10.92.54.8
+    - 10.92.54.9
+    - 10.92.54.10
+    - 10.76.54.8
+    - 10.76.54.9
+    - 10.76.54.10
+    key: test-01:55oYWuB0wlNV0J1eFRdB6g==
+    ttl: 30
+  <% end %>
