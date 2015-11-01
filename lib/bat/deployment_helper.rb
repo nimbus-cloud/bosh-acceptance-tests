@@ -187,6 +187,16 @@ module Bat
       @spec['properties'].fetch('network', {}).fetch('type', nil)
     end
 
+    #  nimbus stuff
+    def active_side
+      @spec['properties']['active_side'] = true
+    end
+
+    def passive_side
+      @spec['properties']['passive_side'] = true
+    end
+    # nimbus stuff
+
     def get_task_id(output, state = 'done')
       task_regex = /Task (\d+) #{state}/
       expect(output).to match(task_regex)

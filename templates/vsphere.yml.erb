@@ -67,6 +67,32 @@ jobs:
     <% if properties.persistent_disk %>
     persistent_disk: <%= properties.persistent_disk %>
     <% end %>
+
+    # nimbus stuff
+    <% if properties.active_side %>
+    passive: false
+    dns_register_on_start: bat-test.data.test-01.test-paas.bskyb.com
+    drbd:
+      enabled: true
+      force_master: false
+      replication_node1: 10.76.247.240
+      replication_node2: 10.76.247.241
+      replication_type: A
+      secret: drbd_secret
+    <% end %>
+    <% if properties.passive_side %>
+    passive: true
+    dns_register_on_start: bat-test.data.test-01.test-paas.bskyb.com
+    drbd:
+      enabled: true
+      force_master: false
+      replication_node1: 10.76.247.240
+      replication_node2: 10.76.247.241
+      replication_type: A
+      secret: drbd_secret
+    <% end %>
+    # nimbus stuff
+
     networks:
       <% properties.job_networks.each_with_index do |network, i| %>
       - name: <%= network.name %>
@@ -90,7 +116,7 @@ properties:
     <% if properties.batlight.drain_type %>
     drain_type: <%= properties.batlight.drain_type %>
     <% end %>
-  <% if properties.potato %>
+  <% if properties.active_side || properties.passive_side %>
   dns:
     dnsservers:
     - 10.92.54.8
