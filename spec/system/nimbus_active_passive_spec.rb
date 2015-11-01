@@ -16,19 +16,19 @@ describe 'nimbus active/passive drbd and dns updates stuff' do
       use_password('$6$tHAu4zCTso$pAQok0MTHP4newel7KMhTzMI4tQrAWwJ.X./fFAKjbWkCb5sAaavygXAspIGWn8qVD8FeT.Z/XN4dvqKzLHhl0')
       @our_ssh_options = ssh_options.merge(password: 'foobar')
 
-      # first vm
-      use_static_ip         # 10.76.247.240
-      use_deployment_name('bat-hem')
-      use_persistent_disk(1024)
-      active_side
-      @first_deployment_result = @requirements.requirement(deployment, @spec)
-
-      # second vm
+      # secondary vm
       use_second_static_ip  # 10.76.247.241
       use_deployment_name('bat-slo')
       use_persistent_disk(1024)
       passive_side
       @second_deployment_result = @requirements.requirement(deployment, @spec) #, force: true
+
+      # primary vm
+      use_static_ip         # 10.76.247.240
+      use_deployment_name('bat-hem')
+      use_persistent_disk(1024)
+      active_side
+      @first_deployment_result = @requirements.requirement(deployment, @spec)
     end
 
     after(:all) do
