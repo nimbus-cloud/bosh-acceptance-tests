@@ -141,6 +141,18 @@ module Bat
       @spec['properties']['second_static_ip']
     end
 
+    def first_static_ip
+      @spec['properties']['first_static_ip']
+    end
+
+    def nimbus_static_ip
+      @spec['properties']['nimbus_static_ip']
+    end
+
+    def set_nimbus_static_ip(ip)
+      @spec['properties']['nimbus_static_ip'] = ip
+    end
+
     def use_multiple_manual_networks
       @spec['properties']['job_networks'] = []
       @spec['properties']['networks'].each do |network|

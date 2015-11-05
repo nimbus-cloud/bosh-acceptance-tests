@@ -68,13 +68,12 @@ jobs:
     persistent_disk: <%= properties.persistent_disk %>
     <% end %>
 
-    # nimbus stuff
     <% if properties.active_side %>
     passive: false
     dns_register_on_start: bat-test.data.test-01.test-paas.bskyb.com
     drbd:
       enabled: true
-      force_master: false
+      force_master: true
       replication_node1: 10.76.247.240
       replication_node2: 10.76.247.241
       replication_type: A
@@ -91,7 +90,6 @@ jobs:
       replication_type: A
       secret: drbd_secret
     <% end %>
-    # nimbus stuff
 
     networks:
       <% properties.job_networks.each_with_index do |network, i| %>
@@ -101,7 +99,11 @@ jobs:
         <% end %>
         <% if properties.use_static_ip %>
         static_ips:
+        <% if properties.active_side || properties.passive_side %>
+        - <%= properties.nimbus_static_ip %>
+        <% else %>
         - <%= network.static_ip %>
+        <% end %>
         <% end %>
       <% end %>
 
