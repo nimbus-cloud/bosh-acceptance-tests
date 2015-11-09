@@ -48,8 +48,8 @@ describe 'nimbus' do
     end
 
     after(:all) do
-      expect(@bosh_runner.bosh_safe("delete deployment bat-slo")).to succeed
-      expect(@bosh_runner.bosh_safe("delete deployment bat-hem")).to succeed
+      expect(@bosh_runner.bosh_safe('delete deployment bat-slo')).to succeed
+      expect(@bosh_runner.bosh_safe('delete deployment bat-hem --force')).to succeed # need --force as drbd unmount checks if both sides are in sync before unmounting
     end
 
     it 'hem vm registers its ip under bat-test.data.test-01.test-paas.bskyb.com name' do
