@@ -8,7 +8,7 @@ describe 'nimbus' do
     load_deployment_spec
   end
 
-  def deploy_hem(passive)
+  def deploy_hem(passive, first_time_deployment = false)
     reload_deployment_spec
     use_deployment_name('bat-hem')
     use_static_ip
@@ -17,12 +17,12 @@ describe 'nimbus' do
     if passive
       passive_side
     else
-      active_side
+      active_side(first_time_deployment)
     end
     @first_deployment_result = @requirements.requirement(deployment, @spec, force: true)
   end
 
-  def deploy_slo(passive)
+  def deploy_slo(passive, first_time_deployment = false)
     reload_deployment_spec
     use_deployment_name('bat-slo')
     use_static_ip
@@ -31,7 +31,7 @@ describe 'nimbus' do
     if passive
       passive_side
     else
-      active_side
+      active_side(first_time_deployment)
     end
     @second_deployment_result = @requirements.requirement(deployment, @spec, force: true)
   end
@@ -41,7 +41,7 @@ describe 'nimbus' do
 
     before(:all) do
       deploy_slo(true)
-      deploy_hem(false)
+      deploy_hem(false, true) # first time deployment - needs --force flag
       # TODO: drbd setup looses job_name folder from /var/vcap/store ???
       ssh_sudo(first_static_ip, 'vcap', 'mkdir /var/vcap/store/bat', ssh_options)
       ssh_sudo(first_static_ip, 'vcap', 'chown -R vcap:vcap /var/vcap/store/bat', ssh_options)

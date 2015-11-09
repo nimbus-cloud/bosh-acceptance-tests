@@ -200,8 +200,9 @@ module Bat
     end
 
     #  nimbus stuff
-    def active_side
+    def active_side(first_time_deployment = false)
       @spec['properties']['active_side'] = true
+      @spec['properties']['first_time_deployment'] = first_time_deployment
     end
 
     def passive_side

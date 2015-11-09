@@ -73,7 +73,7 @@ jobs:
     dns_register_on_start: bat-test.data.test-01.test-paas.bskyb.com
     drbd:
       enabled: true
-      force_master: true
+      force_master: <%= properties.first_time_deployment %>
       replication_node1: 10.76.247.240
       replication_node2: 10.76.247.241
       replication_type: A
