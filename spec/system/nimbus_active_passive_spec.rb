@@ -53,7 +53,7 @@ describe 'nimbus' do
     end
 
     it 'hem vm registers its ip under bat-test.data.test-01.test-paas.bskyb.com name' do
-      current_ip = Resolv.getaddress 'bat-test.data.test-01.test-paas.bskyb.com'
+       current_ip = Retriable.retriable { Resolv.getaddress 'bat-test.data.test-01.test-paas.bskyb.com' }
       expect(current_ip).to eq(first_static_ip)
     end
 
@@ -75,7 +75,7 @@ describe 'nimbus' do
       expect(ssh(second_static_ip, 'vcap', 'cat /var/vcap/store/bat/drbd_test', ssh_options).strip!).to eq 'hem -> slo'
 
       # ip
-      current_ip = Resolv.getaddress 'bat-test.data.test-01.test-paas.bskyb.com'
+      current_ip = Retriable.retriable { Resolv.getaddress 'bat-test.data.test-01.test-paas.bskyb.com' }
       expect(current_ip).to eq(second_static_ip)
 
       # check drbd status
@@ -96,7 +96,7 @@ describe 'nimbus' do
       expect(ssh(first_static_ip, 'vcap', 'cat /var/vcap/store/bat/drbd_test', ssh_options).strip!).to eq "hem -> slo\nslo -> hem"
 
       # ip
-      current_ip = Resolv.getaddress 'bat-test.data.test-01.test-paas.bskyb.com'
+      current_ip = Retriable.retriable { Resolv.getaddress 'bat-test.data.test-01.test-paas.bskyb.com' }
       expect(current_ip).to eq(first_static_ip)
 
       # check drbd status
