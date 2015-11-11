@@ -1,5 +1,6 @@
 #require 'fakefs/spec_helpers'
 require 'rspec/its'
+require 'retriable'
 
 SPEC_ROOT = File.expand_path(File.dirname(__FILE__))
 
