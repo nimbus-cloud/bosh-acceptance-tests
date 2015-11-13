@@ -35,7 +35,7 @@ module Bat
     end
 
     def supports_network_reconfiguration?
-      name !~ /vcloud/ && name !~ /warden/
+      !(name =~ /vcloud/ && name =~ /centos/) && name !~ /warden/
     end
 
     def sudo_command
@@ -56,7 +56,7 @@ module Bat
     end
 
     def supports_multiple_manual_networks?
-      (name =~ /openstack/ && name =~ /ubuntu/ && name =~ /go_agent/) || (name =~ /vsphere/ && name =~ /go_agent/)
+      (name =~ /openstack/ && name =~ /go_agent/) || (name =~ /vsphere/ && name =~ /go_agent/)
     end
 
     def supports_raw_ephemeral_storage?
