@@ -2,6 +2,10 @@ require 'system/spec_helper'
 
 describe 'nimbus' do
 
+  PRIMARY_SYNCED = '1: cs:Connected ro:Primary/Secondary ds:UpToDate/UpToDate A r-----'
+  SECONDARY_SYNCED = '1: cs:Connected ro:Secondary/Primary ds:UpToDate/UpToDate A r-----'
+
+
   before(:all) do
     @requirements.requirement(@requirements.release)
     @requirements.requirement(@requirements.stemcell)
@@ -36,6 +40,15 @@ describe 'nimbus' do
     @second_deployment_result = @requirements.requirement(deployment, @spec, force: true)
   end
 
+  def expect_to_sync_eventually(ip, expected_drbd_output)
+    out = Retriable.retriable intervals: Array.new(10, 2) do
+      out = ssh(ip, 'vcap', 'cat /proc/drbd', ssh_options)
+      raise 'No yet synced' unless out.include?(expected_drbd_output)
+      out
+    end
+
+    expect(out).to include expected_drbd_output
+  end
 
   context '2 active/passive vms with drbd replication and dns updates' do
 
@@ -58,9 +71,8 @@ describe 'nimbus' do
     end
 
     it 'sets up drbd primary on hem and drbd secondary on slo', ssh: true do
-      sleep(8)
-      expect(ssh(first_static_ip, 'vcap', 'cat /proc/drbd', ssh_options)).to include '1: cs:Connected ro:Primary/Secondary ds:UpToDate/UpToDate A r-----'
-      expect(ssh(second_static_ip, 'vcap', 'cat /proc/drbd', ssh_options)).to include '1: cs:Connected ro:Secondary/Primary ds:UpToDate/UpToDate A r-----'
+      expect_to_sync_eventually(first_static_ip, PRIMARY_SYNCED)
+      expect_to_sync_eventually(second_static_ip, SECONDARY_SYNCED)
     end
 
     it 'replicates data under /var/vcap/store from hem side to slo side', ssh: true do
@@ -79,9 +91,8 @@ describe 'nimbus' do
       expect(current_ip).to eq(second_static_ip)
 
       # check drbd status
-      sleep(8)
-      expect(ssh(second_static_ip, 'vcap', 'cat /proc/drbd', ssh_options)).to include '1: cs:Connected ro:Primary/Secondary ds:UpToDate/UpToDate A r-----'
-      expect(ssh(first_static_ip, 'vcap', 'cat /proc/drbd', ssh_options)).to include '1: cs:Connected ro:Secondary/Primary ds:UpToDate/UpToDate A r-----'
+      expect_to_sync_eventually(second_static_ip, PRIMARY_SYNCED)
+      expect_to_sync_eventually(first_static_ip, SECONDARY_SYNCED)
     end
 
     it 'replicates data under /var/vcap/store from slo side to hem side', ssh: true do
@@ -100,9 +111,8 @@ describe 'nimbus' do
       expect(current_ip).to eq(first_static_ip)
 
       # check drbd status
-      sleep(8)
-      expect(ssh(first_static_ip, 'vcap', 'cat /proc/drbd', ssh_options)).to include '1: cs:Connected ro:Primary/Secondary ds:UpToDate/UpToDate A r-----'
-      expect(ssh(second_static_ip, 'vcap', 'cat /proc/drbd', ssh_options)).to include '1: cs:Connected ro:Secondary/Primary ds:UpToDate/UpToDate A r-----'
+      expect_to_sync_eventually(first_static_ip, PRIMARY_SYNCED)
+      expect_to_sync_eventually(second_static_ip, SECONDARY_SYNCED)
     end
 
   end
