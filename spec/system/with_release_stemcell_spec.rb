@@ -1,6 +1,6 @@
 require 'system/spec_helper'
 
-describe 'with release and stemcell and two deployments' do
+describe 'with release and stemcell and subsequent deployments' do
   before(:all) do
     @requirements.requirement(@requirements.release)
     @requirements.requirement(@requirements.stemcell)
@@ -25,7 +25,8 @@ describe 'with release and stemcell and two deployments' do
       @requirements.requirement(deployment, @spec)
     end
 
-    after do
+    after do |example|
+      check_for_failure(@spec_state, example)
       @requirements.cleanup(deployment)
     end
 
@@ -72,7 +73,7 @@ describe 'with release and stemcell and two deployments' do
     end
   end
 
-  context 'first deployment' do
+  context 'with ephemeral and persistent disk' do
     before(:all) do
       reload_deployment_spec
       # using password 'foobar'
@@ -86,10 +87,9 @@ describe 'with release and stemcell and two deployments' do
       ]
       use_job('colocated')
       use_templates(%w[batarang batlight])
-
       use_persistent_disk(2048)
 
-      @first_deployment_result = @requirements.requirement(deployment, @spec)
+      @requirements.requirement(deployment, @spec)
     end
 
     after(:all) do
@@ -116,14 +116,25 @@ describe 'with release and stemcell and two deployments' do
       end
     end
 
-    it 'should deploy using a static network', ssh: true do
-      skip "doesn't work on AWS as the VIP IP isn't visible to the VM" if aws?
-      skip "doesn't work on OpenStack as the VIP IP isn't visible to the VM" if openstack?
-      skip "doesn't work on Warden as the VIP IP isn't visible to eth0" if warden?
-      expect(ssh(public_ip, 'vcap', '/sbin/ifconfig eth0', @our_ssh_options)).to match /#{static_ip}/
+    it 'should have network access to the vm using the manual static ip' do
+      skip "not applicable for dynamic networking" if dynamic_networking?
+
+      vm = wait_for_vm('colocated/0')
+      expect(vm).to_not be_nil
+      expect(static_ip).to_not be_nil
+      expect(ssh(public_ip, 'vcap', 'hostname', @our_ssh_options)).to match /#{vm[:agent_id]}/
     end
 
-    context 'second deployment' do
+    it 'should have network access to the vm using the vip' do
+      skip "vip network isn't supported" unless includes_vip?
+
+      vm = wait_for_vm('colocated/0')
+      expect(vm).to_not be_nil
+      expect(vip).to_not be_nil
+      expect(ssh(vip, 'vcap', 'hostname', @our_ssh_options)).to match /#{vm[:agent_id]}/
+    end
+
+    context 'changing the persistent disk size' do
       SAVE_FILE = '/var/vcap/store/batarang/save'
 
       before(:all) do
@@ -132,7 +143,7 @@ describe 'with release and stemcell and two deployments' do
           @size = persistent_disk(public_ip, 'vcap', @our_ssh_options)
         end
         use_persistent_disk(4096)
-        @second_deployment_result = @requirements.requirement(deployment, @spec, force: true)
+        @requirements.requirement(deployment, @spec, force: true)
       end
 
       it 'should migrate disk contents', ssh: true do

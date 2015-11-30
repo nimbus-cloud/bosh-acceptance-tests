@@ -97,6 +97,10 @@ module Bat
       @spec.fetch('properties', {}).fetch('name', 'bat')
     end
 
+    def director_ip
+      @env.director
+    end
+
     def use_vip
       @spec['properties']['use_vip'] = true
     end
@@ -105,6 +109,8 @@ module Bat
       @spec['properties']['use_vip'] = false
     end
 
+    # Not necessarily a *public* ip, as it may fall back to
+    # the static ip which is actually private.
     def public_ip
       # For AWS and OpenStack, the elastic IP is the public IP
       # For vSphere and vCloud, the static_ip is the public IP
@@ -121,6 +127,14 @@ module Bat
 
     def static_ip
       static_ips.first
+    end
+
+    def includes_vip?
+      !!(@spec['properties']['vip'])
+    end
+
+    def vip
+      @spec['properties']['vip']
     end
 
     def static_ips
@@ -191,8 +205,8 @@ module Bat
       @spec['properties']['instance_type'] = @spec['properties']['flavor_with_no_ephemeral_disk']
     end
 
-    def dynamic_network?
-      network_type == 'dynamic'
+    def dynamic_networking?
+      @spec['properties']['networks'].any? { |n| n['type'] == 'dynamic' }
     end
 
     def network_type
