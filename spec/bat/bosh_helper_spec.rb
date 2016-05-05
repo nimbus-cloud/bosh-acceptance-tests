@@ -25,31 +25,31 @@ describe Bat::BoshHelper do
 
     context 'when both env var BAT_VCAP_PRIVATE_KEY is set' do
       before { allow(env).to receive(:vcap_private_key).and_return('fake_private_key') }
-      its(:ssh_options) { should eq(private_key: 'fake_private_key', password: 'fake_password') }
+      it { expect(bosh_helper.ssh_options).to eq(private_key: 'fake_private_key', password: 'fake_password') }
     end
 
     context 'when BAT_VCAP_PRIVATE_KEY is not set in env' do
       before { allow(env).to receive(:vcap_private_key).and_return(nil) }
-      its(:ssh_options) { should eq(password: 'fake_password', private_key: nil) }
+      it { expect(bosh_helper.ssh_options).to eq(password: 'fake_password', private_key: nil) }
     end
   end
 
   describe '#wait_for_vm' do
     # rubocop:disable LineLength
     let(:successful_bosh_vms_output) { <<OUTPUT }
-Deployment `jesse'
+Deployment 'jesse'
 
 Director task 1112
 
 Task 5402 done
 
-+-------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
-| Job/index               | State   | Resource Pool | IPs         | CID        | Agent ID                             | Resurrection |
-+-------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
-| jessez/0                | running | fake_pool     | 10.20.30.1  | i-cid      | fake-agent-id                        | active       |
-| uaa_z1/0                | running | small_z1      | 10.50.91.2  | i-24cb6153 | da74e0d8-d2a6-4b2d-904a-b2f0e3dacc49 | active       |
-| uaa_z2/0                | running | timid_z2      | 10.60.80.3  | i-6b19c0da | c293814f-b613-c883-1862-2dcb34c566ad | active       |
-+-------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
++-------------------------------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
+| VM                                              | State   | Resource Pool | IPs         | CID        | Agent ID                             | Resurrection |
++-------------------------------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
+| jessez/0 (29ae97ec-3106-450b-a848-98cb3b25d86f) | running | fake_pool     | 10.20.30.1  | i-cid      | fake-agent-id                        | active       |
+| uaa_z1/0 (a3cebb2f-2553-46e3-aa0d-d2075cd08760) | running | small_z1      | 10.50.91.2  | i-24cb6153 | da74e0d8-d2a6-4b2d-904a-b2f0e3dacc49 | active       |
+| uaa_z2/0 (9bbaf60d-f0a6-40fa-8d6d-c6f0f02b8ca8) | running | timid_z2      | 10.60.80.3  | i-6b19c0da | c293814f-b613-c883-1862-2dcb34c566ad | active       |
++-------------------------------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
 
 VMs total: 3
 OUTPUT
@@ -57,17 +57,17 @@ OUTPUT
 
     # rubocop:disable LineLength
     let(:bosh_vms_output_without_jesse) { <<OUTPUT }
-Deployment `jesse'
+Deployment 'jesse'
 
 Director task 1112
 
 Task 5402 done
 
-+-------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
-| Job/index               | State   | Resource Pool | IPs         | CID        | Agent ID                             | Resurrection |
-+-------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
-| uaa_z2/0                | running | timid_z2      | 10.60.80.3  | i-6b19c0da | c293814f-b613-c883-1862-2dcb34c566ad | active       |
-+-------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
++-------------------------------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
+| VM                                              | State   | Resource Pool | IPs         | CID        | Agent ID                             | Resurrection |
++-------------------------------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
+| uaa_z2/0 (54cacb24-35a8-4b9a-b3f7-94dc0af60119) | running | timid_z2      | 10.60.80.3  | i-6b19c0da | c293814f-b613-c883-1862-2dcb34c566ad | active       |
++-------------------------------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
 
 VMs total: 1
 OUTPUT
@@ -81,7 +81,7 @@ OUTPUT
 
       it 'returns the vm details' do
         expect(bosh_helper.wait_for_vm('jessez/0')).to(eq(
-          job_index: 'jessez/0',
+          vm: 'jessez/0 (29ae97ec-3106-450b-a848-98cb3b25d86f)',
           state: 'running',
           resource_pool: 'fake_pool',
           ips: '10.20.30.1',
@@ -114,7 +114,125 @@ OUTPUT
 
       it 'returns the vm details' do
         expect(bosh_helper.wait_for_vm('jessez/0')).to(eq(
-          job_index: 'jessez/0',
+          vm: 'jessez/0 (29ae97ec-3106-450b-a848-98cb3b25d86f)',
+          state: 'running',
+          resource_pool: 'fake_pool',
+          ips: '10.20.30.1',
+          cid: 'i-cid',
+          agent_id: 'fake-agent-id',
+          resurrection: 'active',
+        ))
+      end
+    end
+  end
+  describe '#wait_for_vm_state' do
+    # rubocop:disable LineLength
+    let(:bosh_vms_output_with_jesse_in_running_state) { <<OUTPUT }
+Deployment 'jesse'
+
+Director task 1112
+
+Task 5402 done
+
++-------------------------------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
+| VM                                              | State   | Resource Pool | IPs         | CID        | Agent ID                             | Resurrection |
++-------------------------------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
+| jessez/0 (29ae97ec-3106-450b-a848-98cb3b25d86f) | running | fake_pool     | 10.20.30.1  | i-cid      | fake-agent-id                        | active       |
+| uaa_z1/0 (a3cebb2f-2553-46e3-aa0d-d2075cd08760) | running | small_z1      | 10.50.91.2  | i-24cb6153 | da74e0d8-d2a6-4b2d-904a-b2f0e3dacc49 | active       |
++-------------------------------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
+
+VMs total: 2
+OUTPUT
+    let(:bosh_vms_output_with_jesse_in_unresponsive_state) { <<OUTPUT }
+Deployment 'jesse'
+
+Director task 1112
+
+Task 5402 done
+
++-------------------------------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
+| VM                                              | State   | Resource Pool | IPs         | CID        | Agent ID                             | Resurrection |
++-------------------------------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
+| jessez/0 (29ae97ec-3106-450b-a848-98cb3b25d86f) | unresponsive agent | fake_pool     | 10.20.30.1  | i-cid      | fake-agent-id                        | active       |
+| uaa_z1/0 (a3cebb2f-2553-46e3-aa0d-d2075cd08760) | running | small_z1      | 10.50.91.2  | i-24cb6153 | da74e0d8-d2a6-4b2d-904a-b2f0e3dacc49 | active       |
++-------------------------------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
+
+
+VMs total: 2
+OUTPUT
+    let(:bosh_vms_output_without_jesse) { <<OUTPUT }
+Deployment 'jesse'
+
+Director task 1112
+
+Task 5402 done
+
++-------------------------------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
+| VM                                              | State   | Resource Pool | IPs         | CID        | Agent ID                             | Resurrection |
++-------------------------------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
+| uaa_z1/0 (a3cebb2f-2553-46e3-aa0d-d2075cd08760) | running | small_z1      | 10.50.91.2  | i-24cb6153 | da74e0d8-d2a6-4b2d-904a-b2f0e3dacc49 | active       |
++-------------------------------------------------+---------+---------------+-------------+------------+--------------------------------------+--------------+
+
+
+VMs total: 2
+OUTPUT
+      # rubocop:enable LineLength
+    context 'when "vm" in expected state' do
+      before do
+        fake_result = double('fake bosh exec result', output: bosh_vms_output_with_jesse_in_running_state)
+        allow(bosh_runner).to receive(:bosh).with('vms --details').and_return(fake_result)
+      end
+
+      it 'returns the vm details' do
+        expect(bosh_helper.wait_for_vm_state('jessez/0', 'running')).to(eq(
+          vm: 'jessez/0 (29ae97ec-3106-450b-a848-98cb3b25d86f)',
+          state: 'running',
+          resource_pool: 'fake_pool',
+          ips: '10.20.30.1',
+          cid: 'i-cid',
+          agent_id: 'fake-agent-id',
+          resurrection: 'active',
+        ))
+      end
+    end
+
+    context 'when "vm" in different state' do
+      before do
+        fake_result = double('fake bosh exec result', output: bosh_vms_output_with_jesse_in_unresponsive_state)
+        allow(bosh_runner).to receive(:bosh).with('vms --details').and_return(fake_result)
+      end
+
+      it 'returns nil' do
+        expect(bosh_helper.wait_for_vm_state('jessez/0', 'running')).to be_nil
+      end
+    end
+
+    context 'when "vm" is missing in "bosh vms" output' do
+      before do
+        fake_result = double('fake bosh exec result', output: bosh_vms_output_without_jesse)
+        allow(bosh_runner).to receive(:bosh).with('vms --details').and_return(fake_result)
+      end
+
+      it 'returns nil' do
+        expect(bosh_helper.wait_for_vm_state('jessez/0', 'running')).to be_nil
+      end
+    end
+
+    context 'when "vm" was not in desired state at first, but appear after 4 retries' do
+      let(:bad_result) { double('fake exec result', output: bosh_vms_output_with_jesse_in_unresponsive_state) }
+      let(:good_result) { double('fake good exec result', output: bosh_vms_output_with_jesse_in_running_state) }
+      before do
+        allow(bosh_runner).to receive(:bosh).with('vms --details').and_return(
+            bad_result,
+            bad_result,
+            bad_result,
+            good_result,
+        )
+      end
+
+      it 'returns the vm details' do
+        expect(bosh_helper.wait_for_vm_state('jessez/0', 'running')).to(eq(
+          vm: 'jessez/0 (29ae97ec-3106-450b-a848-98cb3b25d86f)',
           state: 'running',
           resource_pool: 'fake_pool',
           ips: '10.20.30.1',

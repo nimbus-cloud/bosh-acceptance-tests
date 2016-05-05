@@ -29,11 +29,11 @@ describe 'with release, stemcell and failed deployment' do
       failed_deployment_result = bosh('deploy', on_error: :return)
 
       # possibly check for:
-      # Error 400007: `batlight/0' is not running after update
+      # Error 400007: 'batlight/0' is not running after update
       expect(failed_deployment_result).to_not succeed
 
       events(get_task_id(failed_deployment_result.output, 'error')).each do |event|
-        expect(event['task']).to_not match(/^batlight\/1/) if event['stage'] == 'Updating job'
+        expect(event['task']).to_not match(/^batlight\/.* (1)/) if event['stage'] == 'Updating job'
       end
     end
   end
@@ -47,12 +47,12 @@ describe 'with release, stemcell and failed deployment' do
       expect(bosh_safe("deployment #{deployment_manifest_bad.to_path}")).to succeed
 
       # possibly check for:
-      # Error 400007: `batlight/0' is not running after update
+      # Error 400007: 'batlight/0' is not running after update
       failed_deployment_result = bosh_safe('deploy')
       expect(failed_deployment_result).to_not succeed
 
       events(get_task_id(failed_deployment_result.output, 'error')).each do |event|
-        expect(event['task']).to_not match(/^batlight\/1/) if event['stage'] == 'Updating job'
+        expect(event['task']).to_not match(/^batlight\/.* (1)/) if event['stage'] == 'Updating job'
       end
     end
   end
