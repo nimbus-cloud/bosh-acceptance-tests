@@ -55,9 +55,6 @@ describe 'nimbus' do
     before(:all) do
       deploy_slo(true)
       deploy_hem(false, true) # first time deployment - needs --force flag
-      # TODO: drbd setup looses job_name folder from /var/vcap/store ???
-      ssh_sudo(first_static_ip, 'vcap', 'mkdir /var/vcap/store/bat', ssh_options)
-      ssh_sudo(first_static_ip, 'vcap', 'chown -R vcap:vcap /var/vcap/store/bat', ssh_options)
     end
 
     after(:all) do
@@ -77,14 +74,14 @@ describe 'nimbus' do
 
     it 'replicates data under /var/vcap/store from hem side to slo side', ssh: true do
       # create file
-      ssh(first_static_ip, 'vcap', "echo 'hem -> slo' > /var/vcap/store/bat/drbd_test", ssh_options)
+      ssh(first_static_ip, 'vcap', "echo 'hem -> slo' > /var/vcap/store/batlight/drbd_test", ssh_options)
 
       # cut-over
       deploy_hem(true)
       deploy_slo(false)
 
       # check file on the other side
-      expect(ssh(second_static_ip, 'vcap', 'cat /var/vcap/store/bat/drbd_test', ssh_options).strip!).to eq 'hem -> slo'
+      expect(ssh(second_static_ip, 'vcap', 'cat /var/vcap/store/batlight/drbd_test', ssh_options).strip!).to eq 'hem -> slo'
 
       # ip
       current_ip = Retriable.retriable { Resolv.getaddress 'bat-test.data.test-01.test-paas.bskyb.com' }
@@ -97,14 +94,14 @@ describe 'nimbus' do
 
     it 'replicates data under /var/vcap/store from slo side to hem side', ssh: true do
       # append
-      ssh(second_static_ip, 'vcap', "echo 'slo -> hem' >> /var/vcap/store/bat/drbd_test", ssh_options)
+      ssh(second_static_ip, 'vcap', "echo 'slo -> hem' >> /var/vcap/store/batlight/drbd_test", ssh_options)
 
       # cutover
       deploy_slo(true)
       deploy_hem(false)
 
       # check on the other side
-      expect(ssh(first_static_ip, 'vcap', 'cat /var/vcap/store/bat/drbd_test', ssh_options).strip!).to eq "hem -> slo\nslo -> hem"
+      expect(ssh(first_static_ip, 'vcap', 'cat /var/vcap/store/batlight/drbd_test', ssh_options).strip!).to eq "hem -> slo\nslo -> hem"
 
       # ip
       current_ip = Retriable.retriable { Resolv.getaddress 'bat-test.data.test-01.test-paas.bskyb.com' }
