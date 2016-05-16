@@ -102,7 +102,11 @@ module Bat
         @logger.info('deployment not already deployed, deploying...')
         what.generate_deployment_manifest(deployment_spec)
         expect(@bosh_runner.bosh_safe("deployment #{what.to_path}")).to succeed
-        expect(@bosh_runner.bosh_safe('deploy')).to succeed
+        cmd = 'deploy'
+        if options[:recreate]
+          cmd += ' --recreate'
+        end
+        expect(@bosh_runner.bosh_safe(cmd)).to succeed
       end
     rescue RSpec::Expectations::ExpectationNotMetError
       @spec_state.register_fail

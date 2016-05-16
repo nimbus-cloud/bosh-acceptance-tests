@@ -12,7 +12,7 @@ describe 'nimbus' do
     load_deployment_spec
   end
 
-  def deploy_hem(passive, first_time_deployment = false)
+  def deploy_hem(passive, first_time_deployment = false, recreate = false)
     reload_deployment_spec
     use_deployment_name('bat-hem')
     use_static_ip
@@ -23,10 +23,10 @@ describe 'nimbus' do
     else
       active_side(first_time_deployment)
     end
-    @first_deployment_result = @requirements.requirement(deployment, @spec, force: true)
+    @first_deployment_result = @requirements.requirement(deployment, @spec, force: true, recreate: recreate)
   end
 
-  def deploy_slo(passive, first_time_deployment = false)
+  def deploy_slo(passive, first_time_deployment = false, recreate = false)
     reload_deployment_spec
     use_deployment_name('bat-slo')
     use_static_ip
@@ -37,7 +37,7 @@ describe 'nimbus' do
     else
       active_side(first_time_deployment)
     end
-    @second_deployment_result = @requirements.requirement(deployment, @spec, force: true)
+    @second_deployment_result = @requirements.requirement(deployment, @spec, force: true, recreate: recreate)
   end
 
   def expect_to_sync_eventually(ip, expected_drbd_output)
@@ -63,7 +63,7 @@ describe 'nimbus' do
     end
 
     it 'hem vm registers its ip under bat-test.data.test-01.test-paas.bskyb.com name' do
-       current_ip = Retriable.retriable { Resolv.getaddress 'bat-test.data.test-01.test-paas.bskyb.com' }
+      current_ip = Retriable.retriable { Resolv.getaddress 'bat-test.data.test-01.test-paas.bskyb.com' }
       expect(current_ip).to eq(first_static_ip)
     end
 
@@ -110,6 +110,31 @@ describe 'nimbus' do
       # check drbd status
       expect_to_sync_eventually(first_static_ip, PRIMARY_SYNCED)
       expect_to_sync_eventually(second_static_ip, SECONDARY_SYNCED)
+    end
+
+    # this spec tests LVM2_member file system type (DRBD) feature added to bosh agent
+    it 'recreate vm works without loosing data' do
+      # bosh deploy --recreate
+      deploy_hem(false, false, true) # bosh deploy --recreate (hemel)
+
+      # check on the other side
+      expect(ssh(first_static_ip, 'vcap', 'cat /var/vcap/store/batlight/drbd_test', ssh_options).strip!).to eq "hem -> slo\nslo -> hem"
+
+      # ip
+      current_ip = Retriable.retriable { Resolv.getaddress 'bat-test.data.test-01.test-paas.bskyb.com' }
+      expect(current_ip).to eq(first_static_ip)
+
+      # check drbd status
+      expect_to_sync_eventually(first_static_ip, PRIMARY_SYNCED)
+      expect_to_sync_eventually(second_static_ip, SECONDARY_SYNCED)
+    end
+
+    xit 'storage vmotion - persistent disks are found and relocated to a location expected by BOSH' do
+      # no way to automate storage vmotion - has to be done manually
+      # 1. in vsphere find the vm and move its persistent disk to a different host
+      # 2. run bosh deploy --recreate
+      # 3. verify persistent disk is mounted and data is there
+      true.should be(true)
     end
 
   end
