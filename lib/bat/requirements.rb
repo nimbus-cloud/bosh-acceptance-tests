@@ -102,7 +102,7 @@ module Bat
         @logger.info('deployment not already deployed, deploying...')
         what.generate_deployment_manifest(deployment_spec)
         expect(@bosh_runner.bosh_safe("deployment #{what.to_path}")).to succeed
-        cmd = 'deploy'
+        cmd = 'deploy --no-redact'
         if options[:recreate]
           cmd += ' --recreate'
         end

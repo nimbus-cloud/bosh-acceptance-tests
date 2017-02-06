@@ -129,10 +129,6 @@ module Bat
       static_ips.first
     end
 
-    def includes_vip?
-      !!(@spec['properties']['vip'])
-    end
-
     def vip
       @spec['properties']['vip']
     end
@@ -203,10 +199,6 @@ module Bat
 
     def use_flavor_with_no_ephemeral_disk
       @spec['properties']['instance_type'] = @spec['properties']['flavor_with_no_ephemeral_disk']
-    end
-
-    def dynamic_networking?
-      @spec['properties']['networks'].any? { |n| n['type'] == 'dynamic' }
     end
 
     def network_type
